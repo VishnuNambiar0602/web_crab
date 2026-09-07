@@ -1,91 +1,105 @@
-# Startup India Scraper for Zyte Scrapy Cloud
+# India Startup Lead Generator — Zyte / Scrapy
 
-A Scrapy project designed to collect publicly accessible startup-directory information from the official Startup India portal.
+This is a Scrapy project designed for Zyte Scrapy Cloud. It does **not** attempt to bypass the Startup India login wall.
 
-## What it extracts
+## Why this version is different
 
-When the portal exposes the data publicly, the spider attempts to collect:
+The current Startup India public search page displays a login/registration wall before startup records are available. Instead of trying to defeat that restriction, this project uses **Indian Startup Map** as a public discovery source. Indian Startup Map states that it reproduces Startup India/state-portal startup data and currently exposes a large public A-to-Z company index.
 
-- Startup name
-- Startup/profile URL
+Important: Indian Startup Map is an independent publication, not the Government of India or Startup India. Treat its records as a third-party reproduction and verify important information independently.
+
+## What it collects
+
+### Fast directory mode (default)
+- Startup/company name
+- Public company profile URL
+- District/city shown in the directory
+- Primary industry
+- Source page
+- Source snapshot
+
+### Enrichment mode
+Set `ENRICH_COMPANY_PAGES=true` to visit each public company profile and attempt to collect:
 - Description
 - Website
-- Email and phone, when publicly displayed
-- City and state
-- Industry, sector and stage
-- DPIIT recognition information
-- Recognition number
-- Incorporation date
-- Founders/promoters
-- Social links
-- Crawl status and timestamp
+- State
+- Sectors as filed
+- CIN, when displayed
+- DPIIT recognition indicator, when displayed
+- Public email addresses appearing on the page
+- Public phone numbers appearing on the page
+- Public social links appearing on the page
 
-## Important current-site limitation
+The enrichment mode does **not** log in, bypass CAPTCHAs, or access private data.
 
-The Startup India directory currently shows a **login/register wall** before startup records on its search page. The spider does not bypass login, CAPTCHA, authentication, or other access controls.
+## Recommended first Zyte run
 
-If the portal provides records publicly to your account/session in the future, the spider is ready to parse them. For JS-heavy/public pages, you can also run with Zyte API browser rendering.
+Use these environment/job settings:
 
-## Deploy directly from GitHub
+```text
+START_LETTER=A
+START_PAGE=1
+MAX_INDEX_PAGES=1
+MAX_ITEMS=100
+ENRICH_COMPANY_PAGES=false
+```
 
-1. Create a new GitHub repository.
-2. Upload the **contents of this ZIP** to the repository root.
-3. Make sure `scrapy.cfg` is directly in the repository root.
-4. In Zyte Scrapy Cloud, open **Code & Deploys → GitHub → Connect to GitHub**.
-5. Select this repository and deploy the branch.
+This gives you a small test batch first.
 
-Zyte's GitHub deployment requires the Scrapy project, including `scrapy.cfg`, to be at the repository root.
+## Then enrich a test batch
 
-## Run the spider
+```text
+START_LETTER=A
+START_PAGE=1
+MAX_INDEX_PAGES=1
+MAX_ITEMS=25
+ENRICH_COMPANY_PAGES=true
+```
 
-Spider name:
+If the company profile pages are returning useful fields, increase `MAX_ITEMS` gradually.
 
-    startup_india
+## Crawling the whole public index
 
-Default run:
+The source currently publishes 2,297 index pages covering 228,415 company records with a full page. A full crawl is therefore much larger than a normal test job. Do not start the complete crawl until you have validated a small batch and checked Zyte usage/costs.
 
-    scrapy crawl startup_india
+You can split work by letter/page, for example:
 
-Useful examples:
+```text
+START_LETTER=A
+START_PAGE=1
+MAX_INDEX_PAGES=237
+```
 
-    scrapy crawl startup_india -a max_pages=20
+and then repeat for B, C, etc. The exact page counts can change as the source changes, so validate each batch.
 
-    scrapy crawl startup_india -a state=Karnataka -a city=Bengaluru
+## Local test
 
-    scrapy crawl startup_india -a industry=AI -a max_pages=50
+```bash
+pip install -r requirements.txt
+scrapy crawl india_startups -O startups.csv
+```
 
-    scrapy crawl startup_india -a use_zyte=true -a max_pages=20
+For enrichment:
 
-The last command requests Zyte API browser-rendered HTML. It requires a valid Zyte API key/subscription. In Scrapy Cloud, Zyte API availability depends on your account/subscription.
+```bash
+set ENRICH_COMPANY_PAGES=true
+set MAX_ITEMS=25
+scrapy crawl india_startups -O startups_enriched.csv
+```
+
+## Zyte deployment
+
+The repository is structured with `scrapy.cfg` at the root and `scrapinghub.yml` for Scrapy Cloud. GitHub deployment is supported by Scrapy Cloud.
+
+Do not commit Zyte API keys or Scrapy Cloud API keys. Configure credentials through Zyte/project settings.
 
 ## Output
 
-The project configures Scrapy Cloud/local Scrapy to write:
+The project writes:
 
-- `/scrapy/startups.jsonl`
-- `/scrapy/startups.csv`
+- `startups.csv`
+- `startups.jsonl`
 
-You can also use Scrapy Cloud's **Items → Export** functionality.
+## Data-quality notes
 
-## Scheduling
-
-After deployment, use the Scrapy Cloud dashboard's scheduling/periodic jobs feature to run the spider automatically (for example, daily).
-
-The code itself does not create an external schedule or send data anywhere.
-
-## Filters
-
-The spider accepts:
-
-- `max_pages` — maximum number of directory pages
-- `page` — starting page number
-- `industry`
-- `sector`
-- `state`
-- `city`
-- `stage`
-- `use_zyte=true|false`
-
-## Compliance
-
-Use the scraper only for information that is publicly accessible and permitted by the target site's terms, robots directives, and applicable law. Do not use it to bypass authentication, CAPTCHA, rate limits, or other access controls.
+A startup registration is not proof that a company is currently operating. The source itself warns that some registered startups may be dormant. Use the records as leads/discovery data, and verify company status before outreach.
