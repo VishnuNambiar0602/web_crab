@@ -1,0 +1,25 @@
+import scrapy
+
+
+class StartupItem(scrapy.Item):
+    source = scrapy.Field()
+    source_url = scrapy.Field()
+    profile_url = scrapy.Field()
+    startup_name = scrapy.Field()
+    description = scrapy.Field()
+    website = scrapy.Field()
+    email = scrapy.Field()
+    phone = scrapy.Field()
+    city = scrapy.Field()
+    state = scrapy.Field()
+    country = scrapy.Field()
+    industry = scrapy.Field()
+    sector = scrapy.Field()
+    stage = scrapy.Field()
+    dpiit_recognised = scrapy.Field()
+    recognition_number = scrapy.Field()
+    incorporation_date = scrapy.Field()
+    founders = scrapy.Field()
+    social_links = scrapy.Field()
+    scraped_at = scrapy.Field()
+    crawl_status = scrapy.Field()
